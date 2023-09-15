@@ -54,7 +54,7 @@ def testBrightenImg(im):
 
 def testCheckBoardImg(im):
     m, n = 8, 8
-    im2 = checkBoardImg(im, m, n)
+    im2 = checkBoardImg(im.copy(), m, n)
     return [im2]
 
 
