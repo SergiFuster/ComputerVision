@@ -40,6 +40,29 @@ def checkBoardImg(im, m, n):
                     (invertImg(im[fil*m_pixels:(fil+1)*m_pixels, col*n_pixels:(col+1)*n_pixels]))
     return im
 
+def rMultiHist(im, n):
+    hist, _ = np.histogram(im.flatten(), list(range(4)), density=False)
+    if n == 1:
+        return hist
+    res = [hist]
+    x_step = im.shape[0] // 2
+    y_step = im.shape[1] // 2
+    for i in range(2):
+        for j in range(2):
+            if(i == 1 and j == 1):
+                res.append(rMultiHist(im[i*x_step:,j*y_step:], n - 1))
+            elif(i == 1):
+                res.append(rMultiHist(im[i*x_step:,j*y_step:(j+1)*y_step], n - 1))
+            elif(j == 1):
+                res.append(rMultiHist(im[i*x_step:(i+1)*x_step,j*y_step:], n - 1))
+            else:
+                res.append(rMultiHist(im[i*x_step:(i+1)*x_step,j*y_step:(j+1)*y_step], n - 1))
+    return res
+
+def muliHist(im, n):
+    return rMultiHist(im, n)
+
+
 
 def testDarkenImg(im):
     im2 = darkenImg(im, p=2)  # Is "p=2" different here than in the function definition? Can we remove "p=" here?
@@ -106,17 +129,14 @@ def doTests():
 
 
 def debug():
-    i = 0
-    for imfile in files:
-        im = np.array(Image.open(imfile).convert('L'))
-        checkboard = checkBoardImg(im, 5, 2)
-        vpu.showImgsPlusHists(im, checkboard, "INVERTED")
-        i += 1
+    im = np.array(Image.open(files[0]).convert('L'))
+    mHist = muliHist(im, 2)
+    print(mHist)
 
 
 if __name__ == "__main__":
-    # debug()
-    doTests()
+    debug()
+    # doTests()
 
 
 
