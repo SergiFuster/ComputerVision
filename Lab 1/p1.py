@@ -25,7 +25,7 @@ def darkenImg(im,p=2):
 
 
 def brightenImg(im, p=2):
-    return np.power(255.0 ** (p - 1) * im, 1. / p)  # notice this NumPy function is different to the scalar math.pow(a,b)
+    return np.power(255.0 ** (p - 1) * im, 1. / p).astype(int)  # notice this NumPy function is different to the scalar math.pow(a,b)
 
 
 def invertImg(im):
@@ -41,6 +41,7 @@ def checkBoardImg(im, m, n):
                 im[fil*m_pixels:(fil+1)*m_pixels, col*n_pixels:(col+1)*n_pixels] = \
                     (invertImg(im[fil*m_pixels:(fil+1)*m_pixels, col*n_pixels:(col+1)*n_pixels]))
     return im
+
 
 def rMultiHist(im, n):
     hist, _ = np.histogram(im.flatten(), list(range(256)), density=False)
@@ -61,8 +62,10 @@ def rMultiHist(im, n):
                 res.append(rMultiHist(im[i*x_step:(i+1)*x_step,j*y_step:(j+1)*y_step], n - 1))
     return res
 
+
 def muliHist(im, n):
     return rMultiHist(im, n)
+
 
 def expTransf(alpha, n, l0, l1, bInc=True):
     l_values = np.linspace(l0, l1, n)
@@ -72,6 +75,7 @@ def expTransf(alpha, n, l0, l1, bInc=True):
     
     T_values = a * np.exp(-alpha * l_values ** 2) + b
     return T_values if bInc else np.flip(T_values)
+
 
 def transfImage(im, f):
     return im * f / 255
@@ -84,7 +88,7 @@ def testDarkenImg(im):
 
 def testBrightenImg(im):
     p=2
-    im2=brightenImg(im,p)
+    im2=brightenImg(im, p)
     return [im2]
 
 
@@ -98,15 +102,15 @@ path_input = './imgs-P1/'
 path_output = './imgs-out-P1/'
 bAllFiles = True
 if bAllFiles:
-    files = glob.glob(path_input + "*.pgm")
+    files = glob.glob(path_input + "*.ppm")
 else:
-    files = [path_input + 'iglesia.pgm'] # iglesia,huesos
+    files = [path_input + 'iglesia.pgm']  # iglesia,huesos
 
-bAllTests = True
+bAllTests = False
 if bAllTests:
     tests = ['testHistEq', 'testBrightenImg', 'testDarkenImg', 'testCheckBoardImg']
 else:
-    tests = ['testHistEq']  # ['testBrightenImg']
+    tests = ['testBrightenImg']  # ['testBrightenImg']
 
 nameTests = {'testHistEq': "Histogram equalization",
              'testBrightenImg': 'Brighten image',
@@ -119,11 +123,13 @@ suffixFiles = {'testHistEq': '_heq',
 
 bSaveResultImgs = True
 
+
 def testMultiHist():
     for file in files:
         im = np.array(Image.open(file).convert('L'))
         mHist = muliHist(im, 2)
         vpu.showInGrid([im] + mHist, title="Multi-histogram")
+
 
 def saveImg(imfile, suffix, im2):
     dirname, basename = os.path.dirname(imfile), os.path.basename(imfile)
@@ -135,7 +141,7 @@ def saveImg(imfile, suffix, im2):
 def doTests():
     print("Testing on", files)
     for imfile in files:
-        im = np.array(Image.open(imfile).convert('L'))  # from Image to array
+        im = np.array(Image.open(imfile))  # from Image to array
         for test in tests:
             out = eval(test)(im)
             im2 = out[0]
@@ -167,8 +173,8 @@ def debug():
 
 
 if __name__ == "__main__":
-    debug()
-    # doTests()
+    # debug()
+    doTests()
 
 
 

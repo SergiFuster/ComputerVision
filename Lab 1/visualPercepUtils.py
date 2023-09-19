@@ -2,6 +2,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
+
 def computeRowsCols(N, m, n):
     print(N, m, n)
     if m is None:
@@ -20,6 +21,7 @@ def computeRowsCols(N, m, n):
     #print(m, n)
     return m, n
 
+
 def showInFigs(imgs,title, nFig=None,bDisplay=False):
 # open all images in separate figures without user interation
     i = 0 if nFig is None else nFig+1
@@ -33,11 +35,10 @@ def showInFigs(imgs,title, nFig=None,bDisplay=False):
         plt.show(block=True)
     return i
 
-def showInGrid(imgs, m=None, n=None, title="",subtitles=None):
+
+def showInGrid(imgs, m=None, n=None, title="", subtitles=None):
     N = len(imgs)
-    #plt.subplots_adjust(top=5) # añadido (10/10/19) para ejecutar una entrega de un estudiante
     m, n = computeRowsCols(N, m, n)
-    #print(m,n)
     fig = plt.figure(figsize=(m, n))
     plt.gray()
     for i in range(1, N + 1):
@@ -53,14 +54,17 @@ def showInGrid(imgs, m=None, n=None, title="",subtitles=None):
     #plt.savefig(title+".png")#,bbox_inches='tight')
     plt.show(block=True)
 
+
 def histImg(im):
     return np.histogram(im.flatten(), 256)[0]
 
-def showPlusInfo(data,title=None):
+
+def showPlusInfo(data, title=None):
     plt.plot(data)
     if title is not None:
         plt.title(title)
     plt.show(block=True)
+
 
 def showImgsPlusHists(im, im2, title=""):
     hists = [histImg(im), histImg(im2)]
