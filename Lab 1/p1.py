@@ -21,7 +21,7 @@ def testHistEq(im):
     return [im2, cdf]
 
 def darkenImg(im,p=2):
-    return (im ** float(p)) / (255 ** (p - 1)) # try without the float conversion and see what happens
+    return (im ** float(p)) / (255 ** (p - 1)).astype(int) # try without the float conversion and see what happens
 
 
 def brightenImg(im, p=2):
