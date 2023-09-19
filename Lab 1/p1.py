@@ -6,6 +6,8 @@ import numpy as np
 import glob
 import os
 import visualPercepUtils as vpu
+import matplotlib.pyplot as plt
+
 
 def histeq(im, nbins=256):
     imhist, bins = np.histogram(im.flatten(), list(range(nbins)), density=False)
@@ -41,7 +43,7 @@ def checkBoardImg(im, m, n):
     return im
 
 def rMultiHist(im, n):
-    hist, _ = np.histogram(im.flatten(), list(range(4)), density=False)
+    hist, _ = np.histogram(im.flatten(), list(range(256)), density=False)
     if n == 1:
         return hist
     res = [hist]
@@ -62,10 +64,21 @@ def rMultiHist(im, n):
 def muliHist(im, n):
     return rMultiHist(im, n)
 
+def expTransf(alpha, n, l0, l1, bInc=True):
+    l_values = np.linspace(l0, l1, n)
+
+    a = (l1 - l0) / (np.exp(-alpha * l1**2) - np.exp(-alpha * l0**2))
+    b = l0 - a * np.exp(-alpha * l0**2)
+    
+    T_values = a * np.exp(-alpha * l_values ** 2) + b
+    return T_values if bInc else np.flip(T_values)
+
+def transfImage(im, f):
+    return im * f / 255
 
 
 def testDarkenImg(im):
-    im2 = darkenImg(im, p=2)  # Is "p=2" different here than in the function definition? Can we remove "p=" here?
+    im2 = darkenImg(im, p=2) 
     return [im2]
 
 
@@ -106,6 +119,11 @@ suffixFiles = {'testHistEq': '_heq',
 
 bSaveResultImgs = True
 
+def testMultiHist():
+    for file in files:
+        im = np.array(Image.open(file).convert('L'))
+        mHist = muliHist(im, 2)
+        vpu.showInGrid([im] + mHist, title="Multi-histogram")
 
 def saveImg(imfile, suffix, im2):
     dirname, basename = os.path.dirname(imfile), os.path.basename(imfile)
@@ -129,9 +147,23 @@ def doTests():
 
 
 def debug():
-    im = np.array(Image.open(files[0]).convert('L'))
-    mHist = muliHist(im, 2)
-    print(mHist)
+    # Example usage
+    alpha = 0.01
+    l0 = 0
+    l1 = 255
+
+    for file in files:
+        im = np.array(Image.open(file).convert('L'))
+        n = im.shape[1]
+        # Apply increasing and decreasing transformations
+        inc_transformation = expTransf(alpha, n, l0, l1, bInc=True)
+        dec_transformation = expTransf(alpha, n, l0, l1, bInc=False)
+        print(f"Increasing transformation: {inc_transformation}")
+        print(f"Decreasing transformation: {dec_transformation}")
+        im2 = transfImage(im, inc_transformation)
+        im3 = transfImage(im, dec_transformation)
+        # Show results
+        vpu.showInGrid([im, im2, im3], title="Increasing and decreasing transformations")
 
 
 if __name__ == "__main__":
