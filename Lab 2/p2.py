@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import math as math
 import glob
 import os
+from scipy import signal
 import sys
 
 sys.path.append("../../p1/code") # set the path for visualPercepUtils.py
@@ -75,9 +76,17 @@ def testGaussianNoise(im, sigmas):
 
 def averageFilter(im, filterSize):
     mask = np.ones((filterSize, filterSize))
-    mask = np.divide(mask, np.sum(mask)) # can you think of any alternative for np.sum(mask)?
+    mask = np.divide(mask, filterSize * filterSize)
     return filters.convolve(im, mask)
 
+def averageFilterSep(im, filterSize):
+    mask_row = np.ones(filterSize) / filterSize
+    for row in im:
+        row = signal.convolve(row, mask_row, mode='same')
+    for col in im.columns:
+        col = signal.convolve(col, mask_row, mode='same')
+    return im
+    
 
 def testAverageFilter(im_clean, params):
     imgs = []
@@ -128,6 +137,32 @@ def testMedianFilter(im_clean, params):
             imgs.append(medianFilter(im_dirty, filterSize))
     return imgs
 
+def testGaussianFilterForSPNoise(im, sigmas, percent):
+    imgs = []
+    for sigma in sigmas:
+        im_dirty = addSPNoise(im, percent)
+        im_filtered = gaussianFilter(im_dirty, sigma)
+        imgs.append(np.array(im_dirty))
+        imgs.append(im_filtered)
+    return imgs
+
+def testAverageFilterForGaussianNoise(im, filterSizes, sigma):
+    imgs = []
+    for filterSize in filterSizes:
+        im_dirty = addGaussianNoise(im, sigma)
+        im_filtered = averageFilter(im_dirty, filterSize)
+        imgs.append(np.array(im_dirty))
+        imgs.append(im_filtered)
+    return imgs
+
+def testMedianFilterForGaussianNoise(im, filterSizes, sigma):
+    imgs = []
+    for filterSize in filterSizes:
+        im_dirty = addGaussianNoise(im, sigma)
+        im_filtered = medianFilter(im_dirty, filterSize)
+        imgs.append(np.array(im_dirty))
+        imgs.append(im_filtered)
+    return imgs
 
 # -----------------
 # Test image files
@@ -192,39 +227,51 @@ def doTests():
         im_pil = Image.open(imfile).convert('L')
         im = np.array(im_pil)  # from Image to array
 
-        for test in tests:
+        # for test in tests:
 
-            if test == "testGaussianNoise":
-                params = gauss_sigmas_noise
-                subTitle = r", $\sigma$: " + str(params)
-            elif test == "testSandPNoise":
-                params = percentagesSandP
-                subTitle = ", %: " + str(params)
-            elif test == "testAverageFilter":
-                params = {}
-                params['filterSizes'] = avgFilter_sizes
-                params['sp_pctg'] = percentagesSandP
-                subTitle = ", " + str(params)
-            elif test == "testMedianFilter":
-                params = {}
-                params['filterSizes'] = avgFilter_sizes
-                params['sp_pctg'] = percentagesSandP
-                subTitle = ", " + str(params)
-            elif test == "testGaussianFilter":
-                params = {}
-                params['sd_gauss_noise'] = gauss_sigmas_noise
-                params['sd_gauss_filter'] = gauss_sigmas_filter
-                subTitle = r", $\sigma_n$ (noise): " + str(gauss_sigmas_noise) + ", $\sigma_f$ (filter): " + str(gauss_sigmas_filter)
-            if test in testsUsingPIL:
-                outs_pil = eval(test)(im_pil, params)
-                outs_np = vpu.pil2np(outs_pil)
-            else:
-                # apply test to given image and given parameters
-                outs_np = eval(test)(im, params)
-                print("num images", len(outs_np))
-            print(len(outs_np))
-            # display original image, noisy images and filtered images
-            vpu.showInGrid([im] + outs_np, title=nameTests[test] + subTitle)
+        #     if test == "testGaussianNoise":
+        #         params = gauss_sigmas_noise
+        #         subTitle = r", $\sigma$: " + str(params)
+        #     elif test == "testSandPNoise":
+        #         params = percentagesSandP
+        #         subTitle = ", %: " + str(params)
+        #     elif test == "testAverageFilter":
+        #         params = {}
+        #         params['filterSizes'] = avgFilter_sizes
+        #         params['sp_pctg'] = percentagesSandP
+        #         subTitle = ", " + str(params)
+        #     elif test == "testMedianFilter":
+        #         params = {}
+        #         params['filterSizes'] = avgFilter_sizes
+        #         params['sp_pctg'] = percentagesSandP
+        #         subTitle = ", " + str(params)
+        #     elif test == "testGaussianFilter":
+        #         params = {}
+        #         params['sd_gauss_noise'] = gauss_sigmas_noise
+        #         params['sd_gauss_filter'] = gauss_sigmas_filter
+        #         subTitle = r", $\sigma_n$ (noise): " + str(gauss_sigmas_noise) + ", $\sigma_f$ (filter): " + str(gauss_sigmas_filter)
+        #     if test in testsUsingPIL:
+        #         outs_pil = eval(test)(im_pil, params)
+        #         outs_np = vpu.pil2np(outs_pil)
+        #     else:
+        #         # apply test to given image and given parameters
+        #         outs_np = eval(test)(im, params)
+        #         print("num images", len(outs_np))
+        #     print(len(outs_np))
+        #     # display original image, noisy images and filtered images
+        #     vpu.showInGrid([im] + outs_np, title=nameTests[test] + subTitle)
+
+    # outs_np = testGaussianFilterForSPNoise(im, [1, 2, 3], 3)
+    # vpu.showInGrid([im] + outs_np, title=['Gaussian Filter & SP Noise', 'sigmas_n (filter): [1, 2, 3], sp_p(noise): 3)'])
+    # outs_np = testAverageFilterForGaussianNoise(im, avgFilter_sizes, 10)
+    # vpu.showInGrid([im] + outs_np, title=['Average Filter & Gaussian Noise', f'sigmas_n (noise): [10], avg_size(filter): [{avgFilter_sizes}])'])
+    # outs_np = testMedianFilterForGaussianNoise(im, medianFilter_sizes, 10)
+    # vpu.showInGrid([im] + outs_np, title=['Median Filter & Gaussian Noise', f'sigmas_n (noise): [10], median_size(filter): [{medianFilter_sizes}])'])
+
+    out = averageFilterSep(im, 3)
+    vpu.showInGrid([im, out], title=['Average Filter Separable', 'avg_size(filter): [3]'])
+
+
 
 if __name__ == "__main__":
     doTests()
