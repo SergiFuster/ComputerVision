@@ -107,6 +107,26 @@ def gaussianFilter(im, sigma=5):
     # im is PIL image
     return filters.gaussian_filter(im, sigma)
 
+def explicitGaussianFilter(im, n=0, sigma=5):
+    gv1d = signal.gaussian(n, std=sigma)
+    gv2d = np.outer(gv1d, gv1d)
+    gv2d /= np.sum(gv2d)
+
+    # Convolve the image with the Gaussian kernel
+    filtered_image = signal.convolve2d(im, gv2d, mode='same', boundary='wrap')
+
+    return filtered_image
+
+def explicitGaussianFilterSep(im, n=0, sigma=5):
+    gv1d = signal.gaussian(n, std=sigma)
+    
+    gv1d = gv1d.reshape((1, n))
+
+    filtered_rows = signal.convolve2d(im, gv1d, mode='same', boundary='wrap')
+
+    filtered_image = signal.convolve2d(filtered_rows, gv1d.T, mode='same', boundary='wrap')
+    
+    return filtered_image
 
 def testGaussianFilter(im_clean, params):
     # This function turned out to be too similar to testAverageFilter
@@ -179,6 +199,43 @@ def testAverageFilterSeparableTimes(im, sizes):
     plt.ylabel('Tiempo de Ejecución (segundos)')
     plt.title('Comparación de Tiempos de Ejecución')
     plt.legend()
+    plt.show()
+
+def testGaussianFilterSeparableTimes(im, sigmas):
+    timesGaussianFilter = []
+    timesGaussianFilterSep = []
+    for sigma in sigmas:
+        timesGaussianFilter.append(timeit.timeit(lambda: gaussianFilter(im, sigma), number=1))
+        timesGaussianFilterSep.append(timeit.timeit(lambda: explicitGaussianFilterSep(im, sigma=sigma), number=1))
+
+    plt.plot(sigmas, timesGaussianFilter, label='Gaussian Filter')
+    plt.plot(sigmas, timesGaussianFilterSep, label='Gaussian Filter Separable')
+    # Añadir etiquetas
+    plt.xlabel('Tamaño del Filtro')
+    plt.ylabel('Tiempo de Ejecución (segundos)')
+    plt.title('Comparación de Tiempos de Ejecución')
+    plt.legend()
+    plt.show()
+
+def testBothGaussiansFilter(im, sigma, n):
+    first_gaussian = gaussianFilter(im, sigma)
+    second_gaussian = explicitGaussianFilter(im, n, sigma)
+
+    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+
+    axs[0].imshow(first_gaussian)
+    axs[0].set_title('1D Gaussian Vector')
+    axs[0].set_xlabel('Index')
+    axs[0].set_ylabel('Value')
+
+
+    axs[1].imshow(second_gaussian)
+    axs[1].set_title('2D Gaussian Matrix')
+    axs[1].set_xlabel('Column Index')
+    axs[1].set_ylabel('Row Index')
+    axs[1].axis('off')  # Hide axes for the image
+
+    plt.tight_layout()
     plt.show()
 # -----------------
 # Test image files
@@ -283,8 +340,7 @@ def doTests():
     # vpu.showInGrid([im] + outs_np, title=['Average Filter & Gaussian Noise', f'sigmas_n (noise): [10], avg_size(filter): [{avgFilter_sizes}])'])
     # outs_np = testMedianFilterForGaussianNoise(im, medianFilter_sizes, 10)
     # vpu.showInGrid([im] + outs_np, title=['Median Filter & Gaussian Noise', f'sigmas_n (noise): [10], median_size(filter): [{medianFilter_sizes}])'])
-    meanFilterSizeTimeTest = [3, 10, 20, 40]
-    testAverageFilterSeparableTimes(im, meanFilterSizeTimeTest)
+    testGaussianFilterSeparableTimes(im, [3, 5, 7, 9, 11, 13, 15])
 
 
 if __name__ == "__main__":
