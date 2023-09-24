@@ -11,6 +11,7 @@ import glob
 import os
 from scipy import signal
 import sys
+import timeit
 
 sys.path.append("../../p1/code") # set the path for visualPercepUtils.py
 import visualPercepUtils as vpu
@@ -80,12 +81,12 @@ def averageFilter(im, filterSize):
     return filters.convolve(im, mask)
 
 def averageFilterSep(im, filterSize):
-    mask_row = np.ones(filterSize) / filterSize
-    for row in im:
-        row = signal.convolve(row, mask_row, mode='same')
-    for col in im.columns:
-        col = signal.convolve(col, mask_row, mode='same')
-    return im
+    mask_row = np.ones((1, filterSize)) / filterSize
+    mask_column = np.ones((filterSize, 1)) / filterSize
+
+    convolver_rows = signal.convolve2d(im, mask_row, mode='same', boundary='wrap')
+    convolved_image = signal.convolve2d(convolver_rows, mask_column, mode='same', boundary='wrap')
+    return convolved_image
     
 
 def testAverageFilter(im_clean, params):
@@ -164,6 +165,21 @@ def testMedianFilterForGaussianNoise(im, filterSizes, sigma):
         imgs.append(im_filtered)
     return imgs
 
+def testAverageFilterSeparableTimes(im, sizes):
+    timesAverageFilter = []
+    timesAverageFilterSep = []
+    for size in sizes:
+        timesAverageFilter.append(timeit.timeit(lambda: averageFilter(im, size), number=1))
+        timesAverageFilterSep.append(timeit.timeit(lambda: averageFilterSep(im, size), number=1))
+
+    plt.plot(sizes, timesAverageFilter, label='Average Filter')
+    plt.plot(sizes, timesAverageFilterSep, label='Average Filter Separable')
+    # Añadir etiquetas
+    plt.xlabel('Tamaño del Filtro')
+    plt.ylabel('Tiempo de Ejecución (segundos)')
+    plt.title('Comparación de Tiempos de Ejecución')
+    plt.legend()
+    plt.show()
 # -----------------
 # Test image files
 # -----------------
@@ -267,10 +283,8 @@ def doTests():
     # vpu.showInGrid([im] + outs_np, title=['Average Filter & Gaussian Noise', f'sigmas_n (noise): [10], avg_size(filter): [{avgFilter_sizes}])'])
     # outs_np = testMedianFilterForGaussianNoise(im, medianFilter_sizes, 10)
     # vpu.showInGrid([im] + outs_np, title=['Median Filter & Gaussian Noise', f'sigmas_n (noise): [10], median_size(filter): [{medianFilter_sizes}])'])
-
-    out = averageFilterSep(im, 3)
-    vpu.showInGrid([im, out], title=['Average Filter Separable', 'avg_size(filter): [3]'])
-
+    meanFilterSizeTimeTest = [3, 10, 20, 40]
+    testAverageFilterSeparableTimes(im, meanFilterSizeTimeTest)
 
 
 if __name__ == "__main__":
