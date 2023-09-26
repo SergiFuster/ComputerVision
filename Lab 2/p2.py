@@ -60,16 +60,16 @@ def testSandPNoise(im, percents):
 # -----------------
 
 def addGaussianNoise(im, sd=5):
-    return im + np.random.normal(loc=0, scale=sd, size=im.shape)
+    return np.clip(im + np.random.normal(0, sd, im.shape), 0, 255).astype(np.uint8)
 
-def testGaussianNoise(im, sigmas):
-    imgs = []
-    for sigma in sigmas:
-        print('testing sigma:', sigma)
-        imgs.append(addGaussianNoise(im, sigma))
-        print(len(imgs))
-    return imgs
+def quotientImage(im, sigma):
+    # Apply Gaussian blur to the original image
+    blurred_im = gaussianFilter(im, sigma)
 
+    # Compute the quotient image
+    quotient_im = im / (blurred_im + 1e-8)  # Adding a small value to avoid division by zero
+
+    return quotient_im
 
 # -------------------------
 # Average (or mean) filter
@@ -139,7 +139,12 @@ def testGaussianFilter(im_clean, params):
             imgs.append(gaussianFilter(im_dirty, filterSize))
     return imgs
 
-
+def testGaussianNoise(im, sigmas):
+    imgs = []
+    for sigma in sigmas:
+        imgs.append(im)
+        imgs.append(addGaussianNoise(im.copy(), sigma))
+    return imgs
 # -----------------
 # Median filter
 # -----------------
@@ -201,6 +206,13 @@ def testAverageFilterSeparableTimes(im, sizes):
     plt.legend()
     plt.show()
 
+def testQuotientImage(im, sigmas):
+    imgs = []
+    for sigma in sigmas:
+        imgs.append(im)
+        imgs.append(quotientImage(im.copy(), sigma))
+    return imgs
+
 def testGaussianFilterSeparableTimes(im, sigmas):
     timesGaussianFilter = []
     timesGaussianFilterSep = []
@@ -243,7 +255,7 @@ def testBothGaussiansFilter(im, sigma, n):
 
 path_input = './imgs-P2/'
 path_output = './imgs-out-P2/'
-bAllFiles = False
+bAllFiles = True
 if bAllFiles:
     files = glob.glob(path_input + "*.pgm")
 else:
@@ -297,7 +309,7 @@ testsUsingPIL = ['testSandPNoise']  # which test(s) uses PIL images as input (in
 def doTests():
     print("Testing on", files)
     for imfile in files:
-        im_pil = Image.open(imfile).convert('L')
+        im_pil = Image.open(imfile)
         im = np.array(im_pil)  # from Image to array
 
         # for test in tests:
@@ -333,14 +345,15 @@ def doTests():
         #     print(len(outs_np))
         #     # display original image, noisy images and filtered images
         #     vpu.showInGrid([im] + outs_np, title=nameTests[test] + subTitle)
-
+        out = testQuotientImage(im, gauss_sigmas_noise)
+        vpu.showInGrid(out, title=['Quotient Image', f'sigmas_n (noise): {gauss_sigmas_noise}'])
     # outs_np = testGaussianFilterForSPNoise(im, [1, 2, 3], 3)
     # vpu.showInGrid([im] + outs_np, title=['Gaussian Filter & SP Noise', 'sigmas_n (filter): [1, 2, 3], sp_p(noise): 3)'])
     # outs_np = testAverageFilterForGaussianNoise(im, avgFilter_sizes, 10)
     # vpu.showInGrid([im] + outs_np, title=['Average Filter & Gaussian Noise', f'sigmas_n (noise): [10], avg_size(filter): [{avgFilter_sizes}])'])
     # outs_np = testMedianFilterForGaussianNoise(im, medianFilter_sizes, 10)
     # vpu.showInGrid([im] + outs_np, title=['Median Filter & Gaussian Noise', f'sigmas_n (noise): [10], median_size(filter): [{medianFilter_sizes}])'])
-    testGaussianFilterSeparableTimes(im, [3, 5, 7, 9, 11, 13, 15])
+       
 
 
 if __name__ == "__main__":
