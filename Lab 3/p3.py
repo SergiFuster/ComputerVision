@@ -11,7 +11,7 @@ import glob
 import os
 import sys
 
-sys.path.append("../../p1/code") # set the path for visualPercepUtils.py
+sys.path.append("../Lab 1") # set the path for visualPercepUtils.py
 import visualPercepUtils as vpu
 
 # ----------------------
@@ -215,6 +215,16 @@ def doTests():
             print(len(outs_np))
 
             vpu.showInGrid([im] + outs_np, title=nameTests[test] + subTitle)
+
+def exercise1():
+    im_pil = Image.open(np.random.choice(files)).convert('L')
+    im = np.array(im_pil)  # from Image to array
+    ft = FT(im)
+    magnitudes = np.log(np.absolute(ft))
+    max_magnitude = np.max(magnitudes)
+    min_magnitude = np.min(magnitudes)
+
+    
 
 
 if __name__ == "__main__":

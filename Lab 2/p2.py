@@ -257,7 +257,7 @@ path_input = './imgs-P2/'
 path_output = './imgs-out-P2/'
 bAllFiles = True
 if bAllFiles:
-    files = glob.glob(path_input + "*.pgm")
+    files = glob.glob(path_input + "*.ppm")
 else:
     files = [path_input + 'lena256.pgm']  # lena256, lena512
 
@@ -289,7 +289,7 @@ bSaveResultImgs = False
 # Parameters of noises
 # -----------------------
 percentagesSandP = [3]  # ratio (%) of image pixes affected by salt and pepper noise
-gauss_sigmas_noise = [3, 5, 10]  # standard deviation (for the [0,255] range) for Gaussian noise
+gauss_sigmas_noise = [3, 5, 10, 15]  # standard deviation (for the [0,255] range) for Gaussian noise
 
 # -----------------------
 # Parameters of filters
@@ -345,7 +345,7 @@ def doTests():
         #     print(len(outs_np))
         #     # display original image, noisy images and filtered images
         #     vpu.showInGrid([im] + outs_np, title=nameTests[test] + subTitle)
-        out = testQuotientImage(im, gauss_sigmas_noise)
+        out = testGaussianNoise(im, gauss_sigmas_noise)
         vpu.showInGrid(out, title=['Quotient Image', f'sigmas_n (noise): {gauss_sigmas_noise}'])
     # outs_np = testGaussianFilterForSPNoise(im, [1, 2, 3], 3)
     # vpu.showInGrid([im] + outs_np, title=['Gaussian Filter & SP Noise', 'sigmas_n (filter): [1, 2, 3], sp_p(noise): 3)'])
