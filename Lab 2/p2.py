@@ -289,7 +289,7 @@ bSaveResultImgs = False
 # Parameters of noises
 # -----------------------
 percentagesSandP = [3]  # ratio (%) of image pixes affected by salt and pepper noise
-gauss_sigmas_noise = [3, 5, 10, 15]  # standard deviation (for the [0,255] range) for Gaussian noise
+gauss_sigmas_noise = [3, 5, 10, 15, 50]  # standard deviation (for the [0,255] range) for Gaussian noise
 
 # -----------------------
 # Parameters of filters
@@ -346,7 +346,7 @@ def doTests():
         #     # display original image, noisy images and filtered images
         #     vpu.showInGrid([im] + outs_np, title=nameTests[test] + subTitle)
         out = testGaussianNoise(im, gauss_sigmas_noise)
-        vpu.showInGrid(out, title=['Quotient Image', f'sigmas_n (noise): {gauss_sigmas_noise}'])
+        vpu.showInGrid(out, title=['Quotient Image', f'sigmas_n (noise): {gauss_sigmas_noise}'], subtitles=[f'original' if _ % 2 == 0 else f'$\\sigma$={i}' for i in gauss_sigmas_noise for _ in range(2)])
     # outs_np = testGaussianFilterForSPNoise(im, [1, 2, 3], 3)
     # vpu.showInGrid([im] + outs_np, title=['Gaussian Filter & SP Noise', 'sigmas_n (filter): [1, 2, 3], sp_p(noise): 3)'])
     # outs_np = testAverageFilterForGaussianNoise(im, avgFilter_sizes, 10)
