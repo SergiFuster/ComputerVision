@@ -220,12 +220,27 @@ def exercise1():
     im_pil = Image.open(np.random.choice(files)).convert('L')
     im = np.array(im_pil)  # from Image to array
     ft = FT(im)
-    magnitudes = np.log(np.absolute(ft))
+    magnitudes = np.log(np.abs(ft))
+    phases = np.angle(ft)
     max_magnitude = np.max(magnitudes)
     min_magnitude = np.min(magnitudes)
+    # (b) Display a boxplot of the magnitude values
+    plt.figure()
+    plt.boxplot(magnitudes.flatten())
+    plt.title('Boxplot of Magnitude')
+    plt.ylabel('Magnitude')
+    plt.show()
+
+    # (c) Plot a histogram of the phase values
+    plt.figure()
+    plt.hist(phases.flatten(), bins=50, range=[-np.pi, np.pi])
+    plt.title('Histogram of Phase')
+    plt.xlabel('Phase')
+    plt.ylabel('Frequency')
+    plt.show()
 
     
 
 
 if __name__ == "__main__":
-    doTests()
+    exercise1()
