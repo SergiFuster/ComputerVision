@@ -10,6 +10,7 @@ import math as math
 import glob
 import os
 import sys
+import timeit
 
 sys.path.append("../Lab 1") # set the path for visualPercepUtils.py
 import visualPercepUtils as vpu
@@ -78,6 +79,37 @@ def averageFilterFrequency(im, filterSize):
     # Finally, IFT of the element-wise product of the FT's
     return np.absolute(IFT(FT(im) * FT(filterBig)))  # both '*' and multiply() perform elementwise product
 
+def gaussianFilterFrequency(im, filterSize, sigma):
+    mask = gaussian_mask(im.shape, filterSize, sigma)
+
+    im_ft = FT(im)
+    mask_ft = FT(mask)
+
+    element_wise_product = im_ft * mask_ft
+
+    im_filtered = np.absolute(IFT(element_wise_product))
+    im_filtered = fft.ifftshift(im_filtered)
+
+    return im_filtered, np.abs(mask_ft), np.log(np.abs(element_wise_product))
+
+def gaussianFilterSpace(im, filterSize, sigma):
+    return filters.gaussian_filter(im, sigma)
+
+def gaussian_mask(im_shape, size, sigma):
+    center = size // 2
+    x, y = np.meshgrid(np.arange(size) - center, np.arange(size) - center)
+    mask = np.exp(-(x**2 + y**2) / (2 * sigma**2)) / (2 * np.pi * sigma**2)
+    matrix_zeros = np.zeros(im_shape)
+    # Determinar las coordenadas para colocar la matriz gaussiana en el centro de la matriz de ceros
+    start_row = (matrix_zeros.shape[0] - mask.shape[0]) // 2
+    start_col = (matrix_zeros.shape[1] - mask.shape[1]) // 2
+
+    end_row = start_row + mask.shape[0]
+    end_col = start_col + mask.shape[1]
+
+    matrix_zeros[start_row:end_row, start_col:end_col] = mask
+
+    return matrix_zeros
 
 def testConvTheo(im, params=None):
     filterSize = params['filterSize']
@@ -141,7 +173,7 @@ def testBandPassFilter(im, params=None):
 # -----------------
 path_input = './imgs-P3/'
 path_output = './imgs-out-P3/'
-bAllFiles = False
+bAllFiles = True
 if bAllFiles:
     files = glob.glob(path_input + "*.pgm")
 else:
@@ -170,6 +202,33 @@ nameTests = {'testFT': '2D Fourier Transform',
 bSaveResultImgs = False
 
 testsUsingPIL = []  # which test(s) uses PIL images as input (instead of NumPy 2D arrays)
+
+def my_mask(n):
+    # Create a 2D array of shape (n, n) filled with zeros
+    arr = -np.ones((n, n), dtype=int)
+
+    # Fill the lower triangle and diagonal with -1
+    arr[np.tril_indices(n, k=-1)] = 1
+
+    # Fill the diagonal with 0
+    np.fill_diagonal(arr, 0)
+
+    return arr
+
+def my_filter(im, n):
+    mask = my_mask(n)
+    filterBig = np.zeros_like(im, dtype=float)  # as large as the image (dtype is important here!)
+
+    w, h = mask.shape
+    w2, h2 = w / 2, h / 2
+    W, H = filterBig.shape
+    W2, H2 = W / 2, H / 2
+
+    filterBig[int(W2 - w2):int(W2 + w2), int(H2 - h2):int(H2 + h2)] = mask
+
+    filterBig = fft.ifftshift(filterBig)  # shift origin at upper-left corner
+
+    return np.absolute(IFT(FT(im) * FT(filterBig)))
 
 
 # -----------------------------------------
@@ -239,8 +298,100 @@ def exercise1():
     plt.ylabel('Frequency')
     plt.show()
 
+def exercise2():
+    im_pil = Image.open(np.random.choice(files)).convert('L')
+    im = np.array(im_pil)  # from Image to array
+
+    filter_size = 100
+    sigma = 100
+
+    gaussian_filtered_frequency, mask_ft, element_wise_product = gaussianFilterFrequency(im, filter_size, sigma)
+    gaussian_filtered_space = gaussianFilterSpace(im, filter_size, sigma)
+
+    mean_filtered_frequency = averageFilterFrequency(im, filter_size)
+
+    margin = 5  # exclude some outer pixels to reduce the influence of border effects
+    rms = np.linalg.norm(gaussian_filtered_space[margin:-margin, margin:-margin] - gaussian_filtered_frequency[margin:-margin, margin:-margin], 2) / np.prod(im.shape)
+    print("Images filtered in space and frequency differ in (RMS):", rms)
+
+    vpu.showInGrid([im, gaussian_filtered_space, gaussian_filtered_frequency, mean_filtered_frequency], title='Filtros Gaussianos', subtitles=["Original", "Gaussian Filter Space", "Gaussian Filter Frequency", "Mean Filter Frequency"])
+    vpu.showInGrid([mask_ft, element_wise_product], title='Mascara y Producto Element-Wise', subtitles=["Mask", "Element-Wise Product"])
+
+def exercise3():
+    im = np.random.random((500, 500))
+
+    sizes =[5, 15, 25, 50]
+    sigma = 5
+
+    times_frequency = []
+    times_space = []
+
+    for size in sizes:
+        times_frequency.append(timeit.timeit(lambda : gaussianFilterFrequency(im, size, sigma), number=1))
+        times_space.append(timeit.timeit(lambda : gaussianFilterSpace(im, size, sigma), number=1))
+
+    # Crear un gráfico para cada tamaño de filtro
+    plt.figure(figsize=(10, 5))
+    plt.title(f'Image Size = {im.shape} | Sigma = {sigma}')
+    plt.xlabel('Size')
+    plt.ylabel('Tiempo (ms)')
+    plt.plot(sizes, times_space, label='Space Domain')
+    plt.plot(sizes, times_frequency, label='Frequency Domain', linestyle='--')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    times_frequency, times_space = [], []
+    im_sizes = [(100, 100), (500, 500), (1000, 1000), (2000, 2000)]
+    for size in im_sizes:
+        im = np.random.random(size)
+        times_frequency.append(timeit.timeit(lambda : gaussianFilterFrequency(im, 5, sigma), number=1))
+        times_space.append(timeit.timeit(lambda : gaussianFilterSpace(im, 5, sigma), number=1))
+
+    plt.figure(figsize=(10, 5))
+    plt.title(f'Sigma = {sigma} | Size = 5')
+    plt.xlabel('Image Size(n x n)')
+    plt.ylabel('Tiempo (ms)')
+    plt.plot(im_sizes, times_space, label='Space Domain')
+    plt.plot(im_sizes, times_frequency, label='Frequency Domain', linestyle='--')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+def exercice4():
+    im_pil = Image.open(np.random.choice(files)).convert('L')
+    im = np.array(im_pil)  # from Image to array
+
+    filter_size = 5
+
+    filtered_image = my_filter(im, filter_size)
+
+    vpu.showInGrid([im, filtered_image], title='Filtro de Máscara', subtitles=["Original", "Filtered"])
     
+def exercice5():
+    files = glob.glob(path_input + "*.gif")
+    images = []
+    for file in files:
+        images.append(np.array(Image.open(file).convert('L')))
+    
+    fts = []
+    for image in images:
+        fts.append(FT(image))
+    
+    lamda = 0.5
+    comb = lamda * fts[0] + (1 - lamda) * fts[1]
+
+    magnitudes = [np.log(np.abs(comb))]
+    phases = [np.angle(comb)]
+
+    for ft in fts:
+        magnitudes.append(np.log(np.abs(ft)))
+        phases.append(np.angle(ft))
+    
+    vpu.showInGrid(magnitudes, title='Magnitudes de las Imágenes', subtitles=["Inverse of the combination", "FT stp1", "FT stp2"])
+    vpu.showInGrid(phases, title='Fases de las Imágenes', subtitles=["Inverse of the combination", "FT stp1", "FT stp2"])
 
 
 if __name__ == "__main__":
-    exercise1()
+    #doTests()
+    exercice5()
