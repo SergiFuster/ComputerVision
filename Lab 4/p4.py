@@ -1,7 +1,6 @@
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.ndimage import filters
 import glob
 import sys
 
@@ -11,7 +10,7 @@ from skimage.transform import hough_line, hough_line_peaks  # , probabilistic_ho
 from scipy import ndimage as ndi
 from copy import deepcopy
 
-sys.path.append("../../p1/code")
+sys.path.append("../Lab 1")
 import visualPercepUtils as vpu
 
 bLecturerVersion=False
@@ -22,8 +21,11 @@ bLecturerVersion=False
 #     pass # file only available to lecturers
 
 def testSobel(im, params=None):
-    gx = filters.sobel(im, 1)
-    return [gx]
+    gx = ndi.sobel(im, axis=1)
+    gy = ndi.sobel(im, axis=0)
+    magnitude = np.sqrt(gx ** 2 + gy ** 2)
+    magnitude = magnitude / np.max(magnitude) * 255
+    return [magnitude > 50]
 
 def testCanny(im, params=None):
     sigma = params['sigma']
@@ -52,22 +54,22 @@ def findPeaks(H, thetas, rhos, nPeaksMax=None):
 # -----------------
 path_input = './imgs-P4/'
 path_output = './imgs-out-P4/'
-bAllFiles = True
+bAllFiles = False
 if bAllFiles:
     files = glob.glob(path_input + "*.p??")
 else:
-    files = [path_input + 'cuadros.png']  # cuadros, lena
+    files = [path_input + 'cuadros.png', path_input + 'lena.pgm']
 
 # --------------------
 # Tests to perform
 # --------------------
-bAllTests = True
+bAllTests = False
 if bAllTests:
     tests = ['testSobel', 'testCanny', 'testHough']
 else:
     tests = ['testSobel']
-    tests = ['testCanny']
-    tests = ['testHough']
+    #tests = ['testCanny']
+    #tests = ['testHough']
 
 # -------------------------------------------------------------------
 # Dictionary of user-friendly names for each function ("test") name
@@ -86,12 +88,12 @@ def doTests():
     nFiles = len(files)
     nFig = None
     for test in tests:
-        if test is "testSobel":
+        if test == "testSobel":
             params = {}
         elif test in ["testCanny", "testHough"]:
             params = {}
             params['sigma'] = 5  # 15
-        if test is "testHough":
+        if test == "testHough":
             pass  # params={}
 
         for i, imfile in enumerate(files):
@@ -108,13 +110,14 @@ def doTests():
 
             outs_np = eval(test)(im, params)
             print("num ouputs", len(outs_np))
-            if test is "testHough":
+            if test == "testHough":
                 outs_np_plot = outs_np[0:1]
             else:
                 outs_np_plot = outs_np
+
             nFig = vpu.showInFigs([im] + outs_np_plot, title=nameTests[test], nFig=nFig, bDisplay=True)  # bDisplay=True for displaying *now* and waiting for user to close
 
-            if test is "testHough":
+            if test == "testHough":
                 H, thetas, rhos = outs_np[1]  # second output is not directly displayable
                 peaks_values, peaks_thetas, peaks_rhos = findPeaks(H, thetas, rhos, nPeaksMax=None)
                 vpu.displayHoughPeaks(H, peaks_values, peaks_thetas, peaks_rhos, thetas, rhos)
@@ -125,6 +128,8 @@ def doTests():
 
     plt.show(block=True)  # show pending plots (useful if we used bDisplay=False in vpu.showInFigs())
 
+def binarisation():
+    im = np.array(Image.open('./imgs-P4/lena.png').convert('L'))
 
 if __name__ == "__main__":
     doTests()
