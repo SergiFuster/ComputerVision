@@ -67,8 +67,8 @@ bAllTests = False
 if bAllTests:
     tests = ['testSobel', 'testCanny', 'testHough']
 else:
-    tests = ['testSobel']
-    #tests = ['testCanny']
+    #tests = ['testSobel']
+    tests = ['testCanny']
     #tests = ['testHough']
 
 # -------------------------------------------------------------------
@@ -92,7 +92,7 @@ def doTests():
             params = {}
         elif test in ["testCanny", "testHough"]:
             params = {}
-            params['sigma'] = 5  # 15
+            params['sigma'] = 1  # 15
         if test == "testHough":
             pass  # params={}
 
