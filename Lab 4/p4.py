@@ -58,7 +58,7 @@ bAllFiles = False
 if bAllFiles:
     files = glob.glob(path_input + "*.p??")
 else:
-    files = [path_input + 'cuadros.png', path_input + 'lena.pgm']
+    files = [path_input + 'cuadros.png']
 
 # --------------------
 # Tests to perform
@@ -68,8 +68,8 @@ if bAllTests:
     tests = ['testSobel', 'testCanny', 'testHough']
 else:
     #tests = ['testSobel']
-    tests = ['testCanny']
-    #tests = ['testHough']
+    #tests = ['testCanny']
+    tests = ['testHough']
 
 # -------------------------------------------------------------------
 # Dictionary of user-friendly names for each function ("test") name
@@ -80,7 +80,7 @@ nameTests = {'testSobel': 'Detector de Sobel',
              'testHough': 'Transformada de Hough'}
 
 bAddNoise = True
-bRotate = False
+bRotate = True
 
 
 def doTests():
@@ -103,7 +103,7 @@ def doTests():
             im = np.array(im_pil)  # from Image to array
 
             if bRotate:
-                im = ndi.rotate(im, 15, mode='nearest')
+                im = ndi.rotate(im, 90, mode='nearest')
 
             if bAddNoise:
                 im = im + np.random.normal(loc=0, scale=5, size=im.shape)
