@@ -12,7 +12,7 @@ from skimage import measure
 
 from skimage.morphology import disk, square, closing, opening # for the mathematically morphology part
 
-sys.path.append("../../p1/code")
+sys.path.append("../Lab 1/")
 import visualPercepUtils as vpu
 
 bStudentVersion=True
@@ -136,6 +136,81 @@ def doTests():
 
     plt.show(block=True)  # show pending plots
 
+def introduction():
+    im = np.array(Image.open('./imgs-P5/monedas.pgm').convert('L'))
+    plt.hist(im.flatten(), bins=256)
+    plt.show()
+    th = 100
+    th_otsu = threshold_otsu(im)
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 10))
+    axs[0].imshow(im > th)
+    axs[0].set_title(f'Threshold {th}')
+    axs[1].imshow(im > th_otsu)
+    axs[1].set_title(f'Otsu threshold {th_otsu}')
+    plt.show()
+
+
+    params = {}
+    params['closing-radius'] = diskSizeForClosing
+    params['opening-radius'] = diskSizeForOpening
+    
+    imgs = labelConnectedComponents(im, params)
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+    axs[0][0].imshow(imgs[0])
+    axs[0][0].set_title(f'Original image')
+    axs[0][1].imshow(imgs[1])
+    axs[0][1].set_title(f'Processed image')
+    axs[1][0].imshow(imgs[2])
+    axs[1][0].set_title(f'Connected components')
+    axs[1][1].imshow(imgs[3])
+    axs[1][1].set_title(f'Connected components from processed image')
+    plt.show()
+
+def fillGaps2(im, params):
+    binIm = im > params['threshold']
+    sElem = disk(params['closing-radius'])
+    return closing(binIm, sElem)
+
+def ejercicio1():
+    im = np.array(Image.open('./imgs-P5/monedas.pgm').convert('L'))
+    my_threshold = 136
+
+    filled = fillGaps2(im, {'closing-radius' : 2, 'threshold' : my_threshold})
+    labeled = measure.label(filled, background=0)
+
+    plt.imshow(labeled)
+    plt.show()
+
+    return labeled
+
+def ejercicio2():
+    labeled = ejercicio1()
+    regions = measure.regionprops(labeled)
+
+    circularity_threshold = 0.9
+    coins_image = np.zeros(labeled.shape, dtype=np.uint8)
+    coin_value = 1
+    no_coin_value = 0
+    for region in regions:
+        area = region.area
+        perimeter = region.perimeter
+        circularity = (4 * np.pi * area) / (perimeter**2)
+        print(f'Circularity of label {region.label}: {circularity}')
+
+        if circularity > circularity_threshold:
+            coins_image[labeled == region.label] = coin_value
+        else:
+            coins_image[labeled == region.label] = no_coin_value
+    
+    plt.imshow(coins_image, cmap='gray')
+    plt.show()
+
+    return coins_image
+
+
+
 
 if __name__ == "__main__":
-    doTests()
+    # doTests()
+    ejercicio2()

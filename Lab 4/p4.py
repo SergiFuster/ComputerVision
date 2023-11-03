@@ -52,20 +52,18 @@ def HOG(im, nbins):
     gx = ndi.sobel(im, axis=1, mode='reflect').flatten()
     gy = ndi.sobel(im, axis=0, mode='reflect').flatten()
     
-    
-    plt.hist(gx, bins=nbins, edgecolor='black')  # bins determina el número de barras en el histograma
-        # Etiquetas y título
+    plt.hist(gx, bins=nbins, edgecolor='black')
     plt.xlabel('Gray Level')
     plt.ylabel('Pixel Count')
     plt.title('Histograma de gradiente en X')
+    plt.show()
 
-    plt.hist(gy, bins=nbins, edgecolor='black')  # bins determina el número de barras en el histograma
-        # Etiquetas y título
+    plt.hist(gy, bins=nbins, edgecolor='black')
     plt.xlabel('Gray Level')
     plt.ylabel('Pixel Count')
     plt.title('Histograma de gradiente en Y')
 
-    plt.show(block=True)
+    plt.show()
 
 # -----------------
 # Test image files
