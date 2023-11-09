@@ -208,9 +208,54 @@ def ejercicio2():
 
     return coins_image
 
+def ejercicio3():
+    coins_image = ejercicio2()
+    labeled = measure.label(coins_image, background=0)
+    regions = measure.regionprops(labeled)
+    result = np.zeros((coins_image.shape[0], coins_image.shape[1], 3), dtype=np.uint8)
+    for region in regions:
+        area = region.area
+        print(f'Area of label {region.label}: {area}')
+        diameter = np.sqrt(area / np.pi) * 2
+        print(f'Diameter of label {region.label}: {diameter}')
+        ratio = 2.54 / 50
+        print(f'Ratio: {ratio}')
+        diameter_m = diameter * ratio / 100
+        print(f'Diameter in meters: {diameter_m}')
+        if diameter_m > 0.02:
+            result[labeled == region.label] = [255, 0, 0]
+        else:
+            result[labeled == region.label] = [0, 0, 255]
 
+    plt.imshow(result)
+    plt.show()
+
+    return result
+
+def ejercicio4():
+    coins_image = ejercicio2()
+    labeled = measure.label(coins_image, background=0)
+    regions = measure.regionprops(labeled)
+    result = 0
+    img = np.zeros((coins_image.shape[0], coins_image.shape[1], 3), dtype=np.uint8)
+    for region in regions:
+        area = region.area
+        diameter = np.sqrt(area / np.pi) * 2
+        ratio = 2.54 / 50
+        diameter_m = diameter * ratio / 100
+        if diameter_m > 0.02:
+            result += 1
+            img[labeled == region.label] = [255, 0, 0]
+        else:
+            result += 0.1
+            img[labeled == region.label] = [0, 0, 255]
+
+    plt.imshow(img)
+    plt.title(f'Money = {result}€')
+    plt.show()
+    return result
 
 
 if __name__ == "__main__":
     # doTests()
-    ejercicio2()
+    print(ejercicio4(), '€')
