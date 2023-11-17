@@ -27,49 +27,52 @@ def display_image_pyr(imgs):
 
     plt.show(block=True)
 
-# def optical_flow(I1g, I2g, window_size, tau=1e-2, bDisplay=False):
-#
-#     kernel_x = np.array([[-1., 1.], [-1., 1.]])
-#     # Your code (1): kernels for y
-#     # Your code (1): kernels for t
-#     w = int(window_size/2) # window_size is odd, all the pixels with offset in between [-w, w] are inside the window
-#
-#     I1g = gaussian(I1g, sigma=5, truncate=1/5)
-#     I2g = gaussian(I2g, sigma=5, truncate=1/5)
-#
-#     # Implement Lucas-Kanade
-#     # for each image point, calculate I_x, I_y, I_t
-#     mode = 'same'
-#     fx = signal.convolve2d(I1g, kernel_x, boundary='symm', mode=mode)
-#     fy = # your code (1)
-#     ft = # your code (1)
-#     if bDisplay:
-#         for f in [fx,fy,ft]:
-#             plt.imshow(f,cmap='gray')
-#             plt.show(block=True)
-#
-#     u = np.zeros(I1g.shape)
-#     v = np.zeros(I1g.shape)
-#
-#     # iterate for each image window of size window_size * window_size
-#     M,N = I1g.shape
-#     for i in range(w, M-w):
-#         for j in range(w, N-w):
-#             Ix = fx[i-w:i+w+1, j-w:j+w+1].flatten()
-#             Iy = fy[i-w:i+w+1, j-w:j+w+1].flatten()
-#             It = ft[i-w:i+w+1, j-w:j+w+1].flatten()
-#
-#             AtA = # your code (2)
-#             Atb = # your code (2)
-#
-#             # your code (4)
-#
-#             if # your code (4)
-#                 nu, residuals, rank, s = # your code (3)
-#                 u[i,j]=nu[0]
-#                 v[i,j]=nu[1]
-#
-#     return u,v
+def optical_flow(I1g, I2g, window_size, tau=1e-2, bDisplay=True):
+
+    kernel_x = np.array([[-1., 1.], [-1., 1.]])
+    kernel_y = np.array([[-1., -1.], [1., 1.]])
+    Mt = np.ones((4, 4)) / 16.0  # Matriz de promedio 4x4
+    w = int(window_size/2) # window_size is odd, all the pixels with offset in between [-w, w] are inside the window
+
+    I1g = gaussian(I1g, sigma=5, truncate=1/5)
+    I2g = gaussian(I2g, sigma=5, truncate=1/5)
+
+    # Implement Lucas-Kanade
+    # for each image point, calculate I_x, I_y, I_t
+    mode = 'same'
+    fx = signal.convolve2d(I1g, kernel_x, boundary='symm', mode=mode)
+    fy = signal.convolve2d(I1g, kernel_y, boundary='symm', mode=mode)
+    ft = (signal.convolve2d(I2g, Mt, boundary='symm', mode=mode) -
+          signal.convolve2d(I1g, Mt, boundary='symm', mode=mode))
+    
+    if bDisplay:
+        for f in [fx,fy,ft]:
+            plt.imshow(f,cmap='gray')
+            plt.show(block=True)
+
+    u = np.zeros(I1g.shape)
+    v = np.zeros(I1g.shape)
+
+    # iterate for each image window of size window_size * window_size
+    M,N = I1g.shape
+    for i in range(w, M-w):
+        for j in range(w, N-w):
+            Ix = fx[i-w:i+w+1, j-w:j+w+1].flatten()
+            Iy = fy[i-w:i+w+1, j-w:j+w+1].flatten()
+            It = ft[i-w:i+w+1, j-w:j+w+1].flatten()
+
+            A = np.vstack((Ix, Iy)).T
+            AtA = A.T @ A 
+            Atb = A.T @ It
+            det = np.linalg.det(AtA)
+            if  abs(det) > 0:
+                eigenvalues = np.linalg.eigvals(AtA)
+                rank = np.linalg.matrix_rank(AtA)
+                if np.min(eigenvalues) > tau or rank == 2:
+                    nu, residuals, rank, s= np.linalg.lstsq(AtA, Atb, rcond=None)
+                    u[i, j] = nu[0]
+                    v[i, j] = nu[1]
+    return u,v
 
 def display_optic_flow(I1, I2, u, v, title=""):
     fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(8, 4))
@@ -204,11 +207,11 @@ if __name__ == "__main__":
 
     # You are asked to experiment with different values for these hyperparameters
     window_size = 3
-    tau = 0.01
+    tau = 0.1
 
     # Running the LK method
-    u, v = np.zeros_like(I1), np.zeros_like(I1) # comment out this line with the proper call (below) when you are ready
-    #u,v = optical_flow(I1, I2, window_size=window_size, tau=tau)
+    #u, v = np.zeros_like(I1), np.zeros_like(I1) # comment out this line with the proper call (below) when you are ready
+    u,v = optical_flow(I1, I2, window_size=window_size, tau=tau)
     display_optic_flow(I1, I2, -u, -v, "Lucas-Kanade method (vanilla version)")
 
     # Compute the magnitude and orientation of OF
