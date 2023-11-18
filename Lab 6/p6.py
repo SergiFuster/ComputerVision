@@ -27,7 +27,7 @@ def display_image_pyr(imgs):
 
     plt.show(block=True)
 
-def optical_flow(I1g, I2g, window_size, tau=1e-2, bDisplay=True):
+def optical_flow(I1g, I2g, window_size, tau=1e-2, bDisplay=False):
 
     kernel_x = np.array([[-1., 1.], [-1., 1.]])
     kernel_y = np.array([[-1., -1.], [1., 1.]])
@@ -105,7 +105,7 @@ def display_optic_flow(I1, I2, u, v, title=""):
     ax2.set_title("Optical flow orientation and vector field")
     ax2.set_axis_off()
     fig.tight_layout()
-
+    
     plt.suptitle(title)
     plt.show(block=True)
 
@@ -173,6 +173,8 @@ def display_magnitude_and_orientation(magnitude, angle):
     plt.title("Orientation")
     plt.show(block=True)
 
+def magnitudes(u, v):
+    return np.sqrt(u ** 2 + v ** 2)
 
 if __name__ == "__main__":
 
@@ -180,17 +182,17 @@ if __name__ == "__main__":
     bCrop = False
 
     if not bSyntheticTransf:
-        seq = 'traffic'
-        seq = 'corridor'
+        # seq = 'traffic'
+        # seq = 'corridor'
         seq = 'taxi'
         I1, I2 = get_real_sequence_image_pair(seq,10)
     else:
-        seq = 'moon'
-        seq = 'astronaut'
+        # seq = 'moon'
+        # seq = 'astronaut'
         seq = 'camera'
         scale = 1 # 1=no change, >1: zoom in, <1: <zoom out (e.g.
-        rotation = -30.0 # in degrees, positive or negative for clockwise or counter-clockwise, respectively
-        translation = (0.0, 0.0) # (tx, ty) in pixel, positive or negative
+        rotation = 0.0 # in degrees, positive or negative for clockwise or counter-clockwise, respectively
+        translation = (1, 0.0) # (tx, ty) in pixel, positive or negative
         I1, I2 = get_synthetic_sequence_image_pair(seq, translation=translation, rotation=rotation, scale=scale)
 
 
@@ -206,8 +208,8 @@ if __name__ == "__main__":
     plt.show(block=True)
 
     # You are asked to experiment with different values for these hyperparameters
-    window_size = 3
-    tau = 0.1
+    window_size = 20
+    tau = 100
 
     # Running the LK method
     #u, v = np.zeros_like(I1), np.zeros_like(I1) # comment out this line with the proper call (below) when you are ready
@@ -215,7 +217,7 @@ if __name__ == "__main__":
     display_optic_flow(I1, I2, -u, -v, "Lucas-Kanade method (vanilla version)")
 
     # Compute the magnitude and orientation of OF
-    magnitude = np.zeros_like(u) # replace with your code
+    magnitude = magnitudes(u, v)
     angle = np.arctan2(v,u)
 
     display_magnitude_and_orientation(magnitude, angle)
