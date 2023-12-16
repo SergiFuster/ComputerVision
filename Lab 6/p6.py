@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
     # You are asked to experiment with different values for these hyperparameters
     window_size = 20
-    tau = 100
+    tau = 1
 
     # Running the LK method
     #u, v = np.zeros_like(I1), np.zeros_like(I1) # comment out this line with the proper call (below) when you are ready

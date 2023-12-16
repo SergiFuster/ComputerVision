@@ -173,7 +173,7 @@ def fillGaps2(im, params):
     return closing(binIm, sElem)
 
 def ejercicio1():
-    im = np.array(Image.open('./imgs-P5/monedas.pgm').convert('L'))
+    im = np.array(Image.open('./imgs-P5/monedas2.pgm').convert('L'))
     my_threshold = 136
 
     filled = fillGaps2(im, {'closing-radius' : 2, 'threshold' : my_threshold})
@@ -232,8 +232,11 @@ def ejercicio3():
 
     return result
 
-def ejercicio4():
-    coins_image = ejercicio2()
+def ejercicio4(im=None):
+    if im is None:
+        coins_image = ejercicio2()
+    else:
+        coins_image = im
     labeled = measure.label(coins_image, background=0)
     regions = measure.regionprops(labeled)
     result = 0
@@ -258,4 +261,4 @@ def ejercicio4():
 
 if __name__ == "__main__":
     # doTests()
-    print(ejercicio4(), '€')
+    pass

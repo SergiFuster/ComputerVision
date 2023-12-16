@@ -38,33 +38,29 @@ def checkBoardImg(im, m, n):
     for fil in range(m):
         for col in range(n):
             if fil % 2 == col % 2:
-                im[fil*m_pixels:(fil+1)*m_pixels, col*n_pixels:(col+1)*n_pixels] = \
-                    (invertImg(im[fil*m_pixels:(fil+1)*m_pixels, col*n_pixels:(col+1)*n_pixels]))
+                fromFil, toFil= fil*m_pixels, (fil+1)*m_pixels
+                fromCol, toCol = col*n_pixels, (col+1)*n_pixels
+                im[fromFil:toFil, fromCol:toCol] = invertImg(im[fromFil:toFil, fromCol:toCol])
     return im
 
 
-def rMultiHist(im, n):
-    hist, _ = np.histogram(im.flatten(), list(range(256)), density=False)
-    if n == 1:
-        return hist
-    res = [hist]
+def rMultiHist(im, n, res):
+    hist, _ = np.histogram(im.flatten(), bins=3, density=False)
+    res.append(hist)
+    if n == 1: return
+    
     x_step = im.shape[0] // 2
     y_step = im.shape[1] // 2
-    for i in range(2):
-        for j in range(2):
-            if(i == 1 and j == 1):
-                res.append(rMultiHist(im[i*x_step:,j*y_step:], n - 1))
-            elif(i == 1):
-                res.append(rMultiHist(im[i*x_step:,j*y_step:(j+1)*y_step], n - 1))
-            elif(j == 1):
-                res.append(rMultiHist(im[i*x_step:(i+1)*x_step,j*y_step:], n - 1))
-            else:
-                res.append(rMultiHist(im[i*x_step:(i+1)*x_step,j*y_step:(j+1)*y_step], n - 1))
-    return res
 
+    rMultiHist(im[x_step:,y_step:], n - 1, res)
+    rMultiHist(im[x_step:,:y_step], n - 1, res)
+    rMultiHist(im[:x_step,y_step:], n - 1, res)
+    rMultiHist(im[:x_step,:y_step], n - 1, res)
 
 def muliHist(im, n):
-    return rMultiHist(im, n)
+    res = []
+    rMultiHist(im, n, res)
+    return res
 
 
 def expTransf(alpha, n, l0, l1, bInc=True):
@@ -100,7 +96,7 @@ def testCheckBoardImg(im):
 
 path_input = './imgs-P1/'
 path_output = './imgs-out-P1/'
-bAllFiles = True
+bAllFiles = False
 if bAllFiles:
     files = glob.glob(path_input + "*.ppm")
 else:
@@ -174,7 +170,11 @@ def debug():
 
 if __name__ == "__main__":
     # debug()
-    doTests()
+    for imfile in files:
+        im = np.array(Image.open(imfile).convert('L'))
+        im = transfImage(im, expTransf(0.0000001, im.shape[1], 0, 255, bInc=True))
+        plt.imshow(im, cmap='gray')
+        plt.show()
 
 
 

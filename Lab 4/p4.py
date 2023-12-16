@@ -6,6 +6,7 @@ import sys
 
 from skimage import feature
 from skimage.transform import hough_line, hough_line_peaks  # , probabilistic_hough_line
+from scipy.signal import convolve2d
 
 from scipy import ndimage as ndi
 from copy import deepcopy
@@ -26,6 +27,20 @@ def testSobel(im, params=None):
     magnitude = np.sqrt(gx ** 2 + gy ** 2)
     magnitude = magnitude / np.max(magnitude) * 255
     return [magnitude > 50]
+
+def Sobel(im):
+    maskx = np.array([[-1, 0, 1],
+                      [-2, 0, 2],
+                      [-1, 0, 1]])
+    masky = np.array([[1, 2, 1],
+                      [0, 0, 0],
+                      [-1, -2, -1]])
+    gx = convolve2d(im, maskx)
+    gy = convolve2d(im, masky)
+    plt.imshow(gx, cmap='gray'); plt.show()
+    plt.imshow(gy, cmap='gray'); plt.show()
+    magnitude = np.sqrt(gx ** 2 + gy ** 2)
+    return magnitude
 
 def testCanny(im, params=None):
     sigma = params['sigma']
@@ -148,4 +163,7 @@ def binarisation():
     im = np.array(Image.open('./imgs-P4/lena.png').convert('L'))
 
 if __name__ == "__main__":
-    HOG(np.array(Image.open('./imgs-P4/lena.pgm').convert('L')), 256)
+    im = np.array(Image.open('./imgs-P4/lena.pgm').convert('L'))
+    im = Sobel(im)
+    plt.imshow(im, cmap='gray')
+    plt.show()
